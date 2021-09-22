@@ -83,7 +83,12 @@ const init = async () => {
                 //input wrapped ether
                 daiWeth.getOutputAmount(new TokenAmount(weth, AMOUNT_ETH_WEI)),
             ]);
-            console.log(uniswapResults);
+            const uniswapRates = {
+                //divide number of DAI in input by eth in output
+                buy: parseFloat(AMOUNT_DAI_WEI / (uniswapResults[0][0].toExact() * 10** 18)),
+                sell: parseFloat(uniswapResults[0][0].toExact() / AMOUNT_ETH)
+            };
+            console.log(uniswapRates);
         })
         .on('error', error => {console.log(error);//if error    
         });
