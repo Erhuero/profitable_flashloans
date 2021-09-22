@@ -11,6 +11,9 @@ const web3 = new Web3(
     //keep yout infura secret
     new Web3.providers.WebsocketProvider(process.env.INFURA_URL)
     );
+    
+    //vanity eth
+    web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY);
 //connexion to kyber
 //with kyber object, we can communicate with the kyber smart contract
 const kyber = new web3.eth.Contract(
@@ -86,16 +89,42 @@ const init = async () => {
             const uniswapRates = {
                 //divide number of DAI in input by eth in output
                 buy: parseFloat(AMOUNT_DAI_WEI / (uniswapResults[0][0].toExact() * 10** 18)),
-                sell: parseFloat(uniswapResults[0][0].toExact() / AMOUNT_ETH)
+                sell: parseFloat(uniswapResults[1][0].toExact() / AMOUNT_ETH)
             };
+            console.log('Uniswap ETH/DAI');
             console.log(uniswapRates);
+
+            //how much of ether we weill pay for the transaction
+            const gasPrice = await web3.eth.getGasPrice();
+            //20000 = gasCost which is arbitrary value
+            const txCost = 20000 * parseInt(gasPrice);
+            //what is current ether price, determine the average between buy and sell price of uniswap
+            const currentEthPrice = (uniswapRates.buy + uniswapRates.sell) / 2;
+            //calculate if we buy ether on kyber and sell on uniswap and get in dollars 
+            //that's why we divide by 10 ** 18
+            const profit1 = (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) * (uniswapRates.sell - kyberRates.buy) - (txCost / 10 **18) * currentEthPrice;
+            const profit2 = (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) * (kyberRates.sell - uniswapRates.buy) - (txCost / 10 **18) * currentEthPrice;
+            if(profit1 > 0) {
+                console.log('Arbitrage opportunity found ! ');
+                //detail of the arbitrage
+                console.log(`Buy ETH on Kyber at ${kyberRates.buy} dai`);
+                console.log(`Sell ETH on Uniswap at ${uniswapRates.sell} dai`);
+                console.log(`Expected profit: ${profit1} dai`);
+            } else if(profit2 > 0){
+                console.log(`Buy ETH on Uniswap at ${uniswapRates.buy} dai`);
+                console.log(`Sell ETH on Kyber at ${kyberRates.sell} dai`);
+                console.log(`Expected profit: ${profit2} dai`);
+            }
         })
-        .on('error', error => {console.log(error);//if error    
+        .on('error', error => {
+            console.log(error);//if error
         });
 
         //poll prices on the kyber exchange everytime we receive a block
         //connexion to a smart contract of kyber and after call a function
         //to get a specific price of the market
+
+        //profit calculation if we buy on uniswap and sold it on kyber
 
     
 }
