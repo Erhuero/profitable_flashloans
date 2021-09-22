@@ -48,7 +48,14 @@ web3.eth.subscribe('newBlockHeaders')
           ) 
           .call()
         ]);
-        console.log(kyberResults);
+        const kyberRates = {
+            buy: parseFloat(1 / (kyberResults[0].expectedRate / (10 ** 18))),
+            sell : parseFloat(kyberResults[1].expectedRate / (10 ** 18))
+        };
+        
+        //console.log(kyberResults);
+        console.log('Kyber ETH/DAI');
+        console.log(kyberRates);
     })
     .on('error', error => {console.log(error);//if error    
     });
